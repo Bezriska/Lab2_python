@@ -1,5 +1,6 @@
 import os
 import pathlib
+from logger import (logger, er_logger)
 from funcs import (if_ls, if_ls_l, chdir_down,
                     chdir_up, home_dir, read_file,
                     copy, copy_tree, move, remove,
@@ -8,9 +9,12 @@ from funcs import (if_ls, if_ls_l, chdir_down,
 def structure():
     stop_word = "stop"
     active_path = pathlib.Path(r"C:\Users\TatyanaPC\Documents\Test_for_lab2")
+    logger.debug(f"Start programm, default path: {str(active_path)}")
     while True:
         print( "\n", active_path)
         user_input = input("Введите команду: ")
+        logger.debug(f"Current directory: {active_path}")
+        logger.debug(f"{user_input}")
         if user_input != stop_word:
             if user_input == "ls" and os.path.exists(active_path) and os.path.isdir(active_path):
                 print(if_ls(active_path))
@@ -18,6 +22,7 @@ def structure():
                 #Рэйзим ошибку
                 #Для теста просто принт
                 print("Такой путь не существует, либо текущий объект не является папкой")
+                er_logger.error("This path does not exist, or the current object is not a folder")
             elif user_input == "ls -l" and os.path.exists(active_path) and os.path.isdir(active_path):
                 for sublist in if_ls_l(pathlib.Path(active_path)):
                     print(" ".join(map(str, sublist)))
@@ -25,6 +30,7 @@ def structure():
                 #Рэйзим ошибку
                 #Для теста просто принт
                 print("Такой путь не существует, либо текущий объект не является папкой")
+                er_logger.error("This path does not exist, or the current object is not a folder")
             elif "cd" == list(map(str, user_input.split()))[0]:
                 parts = user_input.split()
                 if len(parts) == 2:
@@ -33,7 +39,8 @@ def structure():
                             active_path = chdir_up(active_path)
                         else:
                             #Рэйзим ошибку
-                            print("отсутствует родительская директория")
+                            print("Отсутствует родительская директория")
+                            er_logger.error("The parent directory is missing")
                     
                     elif parts[1] == "~":
                         if os.path.exists(home_dir()):
@@ -41,7 +48,7 @@ def structure():
                         else:
                             #Рэйзим ошибку
                             print("Отсутствует домашний каталог")
-
+                            er_logger.error("The home directory is missing")
                     else:
                         if parts[1] in os.listdir(active_path):
                             new_path = chdir_down(active_path, user_input)
@@ -49,13 +56,16 @@ def structure():
                                 active_path = new_path
                             else:
                                 #Рэйзим ошибку
-                                print(f"'{parts[1]}' не является директорией")
+                                print(f"{parts[1]} не является директорией")
+                                er_logger.error(f"{parts[1]} is not a directory")
                         else:
                             #Рэйзим ошибку
                             print(f"Отсутствует директория с именем {parts[1]}")
+                            er_logger.error(f"Missing directory with name: {parts[1]}")
                 else:
                     #Рэйзим ошибку
                     print("Неправильный формат команды cd. Используйте: cd <имя_директории> или cd ..")
+                    er_logger.error("Incorrect format of the command cd. Use: cd <directory_name> or cd ..")
             elif "cat" == list(map(str, user_input.split()))[0]:
                 parts = user_input.split()
                 if len(parts) == 2:
@@ -65,12 +75,15 @@ def structure():
                         else:
                             #Рэйзим ошибку
                             print("Чтение файла с таким расширением не поддерживается")
+                            er_logger.error("Reading a file with this extension is not supported.")
                     else:
                         #Рэйзим ошибку
-                        print("Отсутствует файл с таким именем")
+                        print(f"Отсутствует файл с именем: {parts[1]}")
+                        er_logger.error(f"Missing file with name: {parts[1]}")
                 else:
                     #Рэйзим ошибку
                     print("Неправильный формат команды cat. Используйте: cat <имя_файла>")
+                    er_logger.error("Incorrect format of the command cat. Use: cat <file_name>")
             elif "cp" == list(map(str, user_input.split()))[0]:
                 parts = user_input.split()
                 if len(parts) == 3:
@@ -81,6 +94,8 @@ def structure():
                     #Рэйзим ошибку
                     print("Неправильный формат команды cp. Используйте: cp <имя_файла> <новая_директория>" \
                     "\nДля копирования каталога используйте: cp <имя_каталога> <новая_директория> -r")
+                    er_logger.error("Incorrect format of the command cp. Use: cp <file_name> <new_directory>\n" \
+                    "To copy a directory, use: cp <directory_name> <new_directory> -r")
             elif "mv" == list(map(str, user_input.split()))[0]:
                 parts = user_input.split()
                 if len(parts) == 3:
@@ -88,6 +103,7 @@ def structure():
                 else:
                     #Рэйзим ошибку
                     print("Неправильный формат команды mv. Используйте: mv <имя_файла> <директория_перемещения>")
+                    er_logger.error("Incorrect format of the command mv. Use: mv <file_name> <new_directory>")
             elif "rm" == list(map(str, user_input.split()))[0]:
                 parts = user_input.split()
                 if len(parts) == 2:
@@ -98,7 +114,8 @@ def structure():
                     #Рэйзим ошибку
                     print("Неправильный формат команды rm. Используйте: rm <имя_файла>\n" \
                     "Для удаления каталога используйте: rm <имя_каталога> -r")
-
+                    er_logger.error("Incorrect format of the command rm. Use: rm <file_name>\n" \
+                    "To remove a directory, use: rm <directory_name> -r")
         
         else:
             print("Завершение программы")
