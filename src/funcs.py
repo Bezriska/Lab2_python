@@ -1,7 +1,9 @@
 import os
 import pathlib
-from datetime import datetime, timezone
+from datetime import datetime
 import shutil
+import stat
+from logger import er_logger
 
 
 def if_ls(active_path) -> list:
@@ -18,7 +20,7 @@ def if_ls_l(active_path) -> list:
                         str(os.stat(pathlib.Path(path)).st_size) + " байт",
                         datetime.fromtimestamp(
                             os.stat(pathlib.Path(path)).st_ctime).strftime("%d.%m.%Y"),
-                        str(os.stat(pathlib.Path(path)).st_mode)]
+                        str(stat.filemode(os.stat(pathlib.Path(path)).st_mode))]
             output.append(lst_file)
         else:
             lst_lib = [pathlib.Path(path).name, "папка"]
@@ -27,129 +29,171 @@ def if_ls_l(active_path) -> list:
 
 
 def chdir_down(active_path, user_input):
-    new_object = list(map(str, user_input.split()))
-    output = pathlib.Path(active_path).joinpath(new_object[1])
-    return output
+    if os.access(active_path, os.X_OK):
+        output = pathlib.Path(active_path).joinpath(user_input)
+        return output
+    else:
+        # Рэйзим ошибку
+        print("Недостаточно прав доступа для выполнения команды")
+        er_logger.error(
+            "Недостаточно прав доступа для выоплнения этой команды")
 
 
 def chdir_up(active_path):
-    output = pathlib.Path(active_path).parents[0]
-    return output
+    if os.access(active_path, os.X_OK):
+        output = pathlib.Path(active_path).parents[0]
+        return output
+    else:
+        # Рэйзим ошибку
+        print("Недостаточно прав доступа для выполнения команды")
+        er_logger.error(
+            "Недостаточно прав доступа для выоплнения этой команды")
 
 
 def home_dir():
-    output = pathlib.Path.home()
-    return output
+    if os.access(pathlib.Path.home(), os.X_OK):
+        output = pathlib.Path.home()
+        return output
+    else:
+        # Рэйзим ошибку
+        print("Недостаточно прав доступа для выполнения команды")
+        er_logger.error(
+            "Недостаточно прав доступа для выоплнения этой команды")
 
 
 def read_file(active_path, object):
-
-    new_path = active_path / object
-    with open(new_path, "r") as file:
-        for line in file:
-            print(line.strip())
+    if os.access(active_path, os.R_OK):
+        new_path = active_path / object
+        with open(new_path, "r") as file:
+            for line in file:
+                print(line.strip())
+    else:
+        # Рэйзим ошибку
+        print("Недостаточно прав доступа для выполнения команды")
+        er_logger.error(
+            "Недостаточно прав доступа для выоплнения этой команды")
 
 
 def copy(active_path, object, path):
     object_path = active_path / object
     if "\\" in path:
-        if os.path.exists(object_path) and os.path.isfile(object_path):
+        if os.path.exists(object_path) and os.path.isfile(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(path) and os.path.isdir(path):
                 shutil.copy(object_path, path)
                 print("Копирование завершено")
             else:
                 print(f"Не существует директория {path}")
+                er_logger.error(f"Не существует директория {path}")
         else:
-            print(f"Не существует файл {object}")
+            print(f"Не существует файл {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует файл {object} или недостаточно прав доступа")
     else:
         new_path = active_path / path
-        if os.path.exists(object_path) and os.path.isfile(object_path):
+        if os.path.exists(object_path) and os.path.isfile(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(new_path) and os.path.isdir(new_path):
                 shutil.copy(object_path, new_path)
                 print("Копирование завершено")
             else:
                 print(f"Не существует директория {new_path}")
+                er_logger.error(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object}")
+            print(f"Не существует файл {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует файл {object} или недостаточно прав доступа")
 
 
 def copy_tree(active_path, object, target):
     object_path = active_path / object
     if "\\" in target:
-        if os.path.exists(object_path) and os.path.isdir(object_path):
+        if os.path.exists(object_path) and os.path.isdir(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(target) and os.path.isdir(target):
                 shutil.copytree(object_path, pathlib.Path(
                     target) / pathlib.Path(object), copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
                 print(f"Не существует директория {target}")
+                er_logger.error(f"Не существует директория {target}")
         else:
-            print(f"Не существует файл {object}")
+            print(f"Не существует файл {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует файл {object} или недостаточно прав доступа")
     else:
         new_path = active_path / target
-        if os.path.exists(object_path) and os.path.isdir(object_path):
+        if os.path.exists(object_path) and os.path.isdir(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(new_path) and os.path.isdir(new_path):
                 shutil.copytree(object_path, new_path / object,
                                 copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
                 print(f"Не существует директория {new_path}")
+                er_logger.error(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object}")
+            print(f"Не существует файл {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует файл {object} или недостаточно прав доступа")
 
 
 def move(active_path, object, target):
     object_path = active_path / object
     if "\\" in target:
-        if os.path.exists(object_path):
+        if os.path.exists(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(target) and os.path.isdir(target):
                 shutil.move(object_path, pathlib.Path(
                     target) / pathlib.Path(object))
                 print("Перемещение завершено")
             else:
                 print(f"Не существует директория {target}")
+                er_logger.error(f"Не существует директория {target}")
         else:
-            print(f"Не существует файл {object}")
+            print(
+                f"Не существует объект {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует объект {object} или недостаточно прав доступа")
     else:
         new_path = active_path / target
-        if os.path.exists(object_path):
+        if os.path.exists(object_path) and os.access(object_path, os.X_OK):
             if os.path.exists(new_path) and os.path.isdir(new_path):
                 shutil.move(object_path, new_path / object)
                 print("Перемещение завершено")
             else:
                 print(f"Не существует директория {new_path}")
+                er_logger.error(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object}")
+            print(
+                f"Не существует объект {object} или недостаточно прав доступа")
+            er_logger.error(
+                f"Не существует объект {object} или недостаточно прав доступа")
 
 
 def remove(active_path, object):
     if "\\" in object:
         conf = input("Для подтверждения введите y/n: ")
-        if conf == "y":
+        if conf == "y" and os.access(object, os.X_OK):
             if os.path.exists(object) and os.path.isfile(object):
                 os.remove(object)
-                print("Файл удален")
+                print("Объект удален")
             else:
-                print(f"Не существует файл {object_path}")
+                print(f"Не существует объект {object_path}")
         else:
-            print("Удаление отменено")
+            print("Удаление отменено или недостаточно прав доступа")
     else:
         conf = input("Для подтверждения введите y/n: ")
-        if conf == "y":
-            object_path = active_path / object
+        object_path = active_path / object
+        if conf == "y" and os.access(object_path, os.X_OK):
             if os.path.exists(object_path) and os.path.isfile(object_path):
                 os.remove(object_path)
                 print("Файл удален")
             else:
                 print(f"Не существует файл {object_path}")
         else:
-            print("Удаление отменено")
+            print("Удаление отменено или недостаточно прав доступа")
 
 
 def remove_tree(active_path, object):
     if "\\" in object:
         conf = input("Для подтверждения введите y/n: ")
-        if conf == "y":
+        if conf == "y" and os.access(object, os.X_OK):
             if object != pathlib.Path.home():
                 if pathlib.Path(object).name not in str(active_path):
                     if os.path.exists(object) and os.path.isdir(object):
@@ -165,11 +209,11 @@ def remove_tree(active_path, object):
                 # Рэйзим ошибку
                 print("Нельзя удалить корневой каталог")
         else:
-            print("Удаление отменено")
+            print("Удаление отменено или недостаточно прав доступа")
     else:
         conf = input("Для подтверждения введите y/n: ")
-        if conf == "y":
-            object_path = active_path / object
+        object_path = active_path / object
+        if conf == "y" and os.access(object_path, os.X_OK):
             if object_path != pathlib.Path.home():
                 if object not in str(active_path):
                     if os.path.exists(object_path) and os.path.isdir(object_path):
@@ -185,4 +229,4 @@ def remove_tree(active_path, object):
                 # Рэйзим ошибку
                 print("Нельзя удалить корневой каталог")
         else:
-            print("Удаление отменено")
+            print("Удаление отменено или недостаточно прав доступа")

@@ -5,6 +5,7 @@ from funcs import (if_ls, if_ls_l, chdir_down,
                    chdir_up, home_dir, read_file,
                    copy, copy_tree, move, remove,
                    remove_tree)
+from str_formatter import str_formatter
 
 
 def structure():
@@ -17,8 +18,8 @@ def structure():
         logger.debug(f"Current directory: {active_path}")
         logger.debug(f"{user_input}")
         if user_input != stop_word:
-            if "ls" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            parts = str_formatter(user_input)
+            if "ls" == parts[0]:
                 if user_input == "ls":
                     print(if_ls(active_path))
                 else:
@@ -31,13 +32,13 @@ def structure():
                                 # Рэйзим ошибку
                                 print("Неправильный формат команды ls. Используйте: для отн. пути ls, для подробного вывода ls -l\n"
                                       "Для абс. пути испльзуйте: ls <путь>, для подробного вывода ls <путь> -l")
-                                logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
-                                             "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
+                                er_logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
+                                                "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
                         else:
                             # Рэйзим ошибку
                             print(
                                 "Текущая директория не существует или не является папкой")
-                            logger.error(
+                            er_logger.error(
                                 "Current path is not exist or is not a directory")
                     else:
                         if os.path.exists(parts[1]) and os.path.isdir(parts[1]):
@@ -50,13 +51,13 @@ def structure():
                                 # Рэйзим ошибку
                                 print("Неправильный формат команды ls. Используйте: для отн. пути ls, для подробного вывода ls -l\n"
                                       "Для абс. пути испльзуйте: ls <путь>, для подробного вывода ls <путь> -l")
-                                logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
-                                             "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
+                                er_logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
+                                                "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
                         else:
                             # Рэйзим ошибку
                             print(
                                 f"Путь {parts[1]} не существет или ведет не к папке")
-                            logger.error(
+                            er_logger.error(
                                 f"Path {parts[1]} is not exist or does not lead to directory")
 
             # if user_input == "ls" and os.path.exists(active_path) and os.path.isdir(active_path):
@@ -74,8 +75,7 @@ def structure():
             #     #Для теста просто принт
             #     print("Такой путь не существует, либо текущий объект не является папкой")
             #     er_logger.error("This path does not exist, or the current object is not a folder")
-            elif "cd" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            elif "cd" == parts[0]:
                 if len(parts) == 2:
                     if parts[1] == "..":
                         if os.path.exists(active_path.parents[0]):
@@ -94,7 +94,7 @@ def structure():
                             er_logger.error("The home directory is missing")
                     else:
                         if parts[1] in os.listdir(active_path):
-                            new_path = chdir_down(active_path, user_input)
+                            new_path = chdir_down(active_path, parts[1])
                             if os.path.isdir(new_path):
                                 active_path = new_path
                             else:
@@ -114,8 +114,7 @@ def structure():
                         "Неправильный формат команды cd. Используйте: cd <имя_директории> или cd ..")
                     er_logger.error(
                         "Incorrect format of the command cd. Use: cd <directory_name> or cd ..")
-            elif "cat" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            elif "cat" == parts[0]:
                 if len(parts) == 2:
                     if os.path.exists(pathlib.Path(active_path) / parts[1]):
                         if pathlib.Path(active_path / parts[1]).is_file() and pathlib.Path(active_path / parts[1]).suffix == ".txt":
@@ -136,8 +135,7 @@ def structure():
                         "Неправильный формат команды cat. Используйте: cat <имя_файла>")
                     er_logger.error(
                         "Incorrect format of the command cat. Use: cat <file_name>")
-            elif "cp" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            elif "cp" == parts[0]:
                 if len(parts) == 3:
                     copy(active_path, parts[1], parts[2])
                 elif len(parts) == 4 and parts[3] == "-r":
@@ -148,8 +146,7 @@ def structure():
                           "\nДля копирования каталога используйте: cp <имя_каталога> <новая_директория> -r")
                     er_logger.error("Incorrect format of the command cp. Use: cp <file_name> <new_directory>\n"
                                     "To copy a directory, use: cp <directory_name> <new_directory> -r")
-            elif "mv" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            elif "mv" == parts[0]:
                 if len(parts) == 3:
                     move(active_path, parts[1], parts[2])
                 else:
@@ -158,8 +155,7 @@ def structure():
                         "Неправильный формат команды mv. Используйте: mv <имя_файла> <директория_перемещения>")
                     er_logger.error(
                         "Incorrect format of the command mv. Use: mv <file_name> <new_directory>")
-            elif "rm" == list(map(str, user_input.split()))[0]:
-                parts = user_input.split()
+            elif "rm" == parts[0]:
                 if len(parts) == 2:
                     remove(active_path, parts[1])
                 elif len(parts) == 3 and parts[2] == "-r":
