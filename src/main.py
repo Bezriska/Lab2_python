@@ -1,5 +1,3 @@
-from src.constants import SAMPLE_CONSTANT
-import os
 from src.structure import structure
 
 
@@ -15,6 +13,5 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
-# Добавить абс путь к копированию и для объекта, который копируем, и куда копируем. Для mv тоже самое
+
 # Исправить недочет, если пользователь вводит абс путь, то конвертировать его сразу помощью pathlib.Path()
-# Добавить поддержку абс пути для всех функций

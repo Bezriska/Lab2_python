@@ -4,7 +4,7 @@ from logger import (logger, er_logger)
 from funcs import (if_ls, if_ls_l, chdir_down,
                    chdir_up, home_dir, read_file,
                    copy, copy_tree, move, remove,
-                   remove_tree)
+                   remove_tree, zip_archive)
 from str_formatter import str_formatter
 
 
@@ -59,22 +59,6 @@ def structure():
                                 f"Путь {parts[1]} не существет или ведет не к папке")
                             er_logger.error(
                                 f"Path {parts[1]} is not exist or does not lead to directory")
-
-            # if user_input == "ls" and os.path.exists(active_path) and os.path.isdir(active_path):
-            #     print(if_ls(active_path))
-            # elif user_input == "ls" and (os.path.exists(active_path) == False) and (os.path.isdir(active_path) == False):
-            #     #Рэйзим ошибку
-            #     #Для теста просто принт
-            #     print("Такой путь не существует, либо текущий объект не является папкой")
-            #     er_logger.error("This path does not exist, or the current object is not a folder")
-            # elif user_input == "ls -l" and os.path.exists(active_path) and os.path.isdir(active_path):
-            #     for sublist in if_ls_l(pathlib.Path(active_path)):
-            #         print(" ".join(map(str, sublist)))
-            # elif user_input == "ls -l" and (os.path.exists(active_path) == False) and (os.path.isdir(active_path) == False):
-            #     #Рэйзим ошибку
-            #     #Для теста просто принт
-            #     print("Такой путь не существует, либо текущий объект не является папкой")
-            #     er_logger.error("This path does not exist, or the current object is not a folder")
             elif "cd" == parts[0]:
                 if len(parts) == 2:
                     if parts[1] == "..":
@@ -92,22 +76,36 @@ def structure():
                             # Рэйзим ошибку
                             print("Отсутствует домашний каталог")
                             er_logger.error("The home directory is missing")
+                    elif parts[1] == "-d":
+                        active_path = active_path.anchor
                     else:
-                        if parts[1] in os.listdir(active_path):
-                            new_path = chdir_down(active_path, parts[1])
-                            if os.path.isdir(new_path):
-                                active_path = new_path
+                        if "\\" not in parts[1]:
+                            if parts[1] in os.listdir(active_path):
+                                new_path = chdir_down(active_path, parts[1])
+                                if os.path.isdir(new_path):
+                                    active_path = new_path
+                                else:
+                                    # Рэйзим ошибку
+                                    print(
+                                        f"{parts[1]} не является директорией")
+                                    er_logger.error(
+                                        f"{parts[1]} is not a directory")
                             else:
                                 # Рэйзим ошибку
-                                print(f"{parts[1]} не является директорией")
+                                print(
+                                    f"Отсутствует директория с именем {parts[1]}")
                                 er_logger.error(
-                                    f"{parts[1]} is not a directory")
+                                    f"Missing directory with name: {parts[1]}")
                         else:
-                            # Рэйзим ошибку
-                            print(
-                                f"Отсутствует директория с именем {parts[1]}")
-                            er_logger.error(
-                                f"Missing directory with name: {parts[1]}")
+                            if pathlib.Path(parts[1]).name in os.listdir(pathlib.Path(parts[1]).parents[0]) and os.path.isdir(parts[1]):
+                                active_path = pathlib.Path(parts[1])
+                            else:
+                                # Рэйзим ошибку
+                                print(
+                                    f"Отсутствует директория с именем {parts[1]}. Для перехода в каталог диска введите: cd -d")
+                                er_logger.error(
+                                    f"Missing directory with name: {parts[1]}. To go to disk directory, enter: cd -d")
+
                 else:
                     # Рэйзим ошибку
                     print(
@@ -116,19 +114,29 @@ def structure():
                         "Incorrect format of the command cd. Use: cd <directory_name> or cd ..")
             elif "cat" == parts[0]:
                 if len(parts) == 2:
-                    if os.path.exists(pathlib.Path(active_path) / parts[1]):
-                        if pathlib.Path(active_path / parts[1]).is_file() and pathlib.Path(active_path / parts[1]).suffix == ".txt":
+                    if "\\" not in user_input:
+                        if os.path.exists(pathlib.Path(active_path) / parts[1]):
+                            if pathlib.Path(active_path / parts[1]).is_file() and pathlib.Path(active_path / parts[1]).suffix == ".txt":
+                                read_file(active_path, parts[1])
+                            else:
+                                # Рэйзим ошибку
+                                print(
+                                    "Чтение файла с таким расширением не поддерживается")
+                                er_logger.error(
+                                    "Reading a file with this extension is not supported.")
+                        else:
+                            # Рэйзим ошибку
+                            print(f"Отсутствует файл с именем: {parts[1]}")
+                            er_logger.error(
+                                f"Missing file with name: {parts[1]}")
+                    else:
+                        if os.path.exists(parts[1]):
                             read_file(active_path, parts[1])
                         else:
                             # Рэйзим ошибку
-                            print(
-                                "Чтение файла с таким расширением не поддерживается")
+                            print(f"Отсутствует файл с именем: {parts[1]}")
                             er_logger.error(
-                                "Reading a file with this extension is not supported.")
-                    else:
-                        # Рэйзим ошибку
-                        print(f"Отсутствует файл с именем: {parts[1]}")
-                        er_logger.error(f"Missing file with name: {parts[1]}")
+                                f"Missing file with name: {parts[1]}")
                 else:
                     # Рэйзим ошибку
                     print(
@@ -167,6 +175,15 @@ def structure():
                     er_logger.error("Incorrect format of the command rm. Use: rm <file_name>\n"
                                     "To remove a directory, use: rm <directory_name> -r")
 
+            elif "zip" == parts[0]:
+                if len(parts) == 3:
+                    zip_archive(active_path, parts[1], parts[2])
+                else:
+                    # Рэйзим ошибку
+                    print(
+                        "Неправильный формат команды zip. Используйте: zip <имя_директории> <название архива>")
+                    er_logger.error(
+                        "Incorrect format of the command zip. Use: zip <directory_name> <archive_name>")
         else:
             print("Завершение программы")
             break
