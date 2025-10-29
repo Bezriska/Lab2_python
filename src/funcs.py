@@ -2,10 +2,9 @@ import os
 import pathlib
 from datetime import datetime
 import shutil
-from shutil import make_archive
 import stat
 from logger import er_logger
-import zlib
+import re
 
 
 def if_ls(active_path) -> list:
@@ -35,18 +34,18 @@ def chdir_down(active_path, user_input):
         if os.access(active_path, os.X_OK):
             output = pathlib.Path(active_path).joinpath(user_input)
         else:
-            # Рэйзим ошибку
-            print("Недостаточно прав доступа для выполнения команды")
             er_logger.error(
                 "Not enough rules")
+            raise PermissionError(
+                "Недостаточно прав доступа для выполнения команды")
     else:
         if os.access(user_input, os.X_OK):
             output = pathlib.Path(user_input)
         else:
-            # Рэйзим ошибку
-            print("Недостаточно прав доступа для выполнения команды")
             er_logger.error(
                 "Not enough rules")
+            raise PermissionError(
+                "Недостаточно прав доступа для выполнения команды")
     return output
 
 
@@ -55,10 +54,10 @@ def chdir_up(active_path):
         output = pathlib.Path(active_path).parents[0]
         return output
     else:
-        # Рэйзим ошибку
-        print("Недостаточно прав доступа для выполнения команды")
         er_logger.error(
-            "Недостаточно прав доступа для выоплнения этой команды")
+            "Not enough rules")
+        raise PermissionError(
+            "Недостаточно прав доступа для выполнения команды")
 
 
 def home_dir():
@@ -66,10 +65,10 @@ def home_dir():
         output = pathlib.Path.home()
         return output
     else:
-        # Рэйзим ошибку
-        print("Недостаточно прав доступа для выполнения команды")
         er_logger.error(
-            "Недостаточно прав доступа для выоплнения этой команды")
+            "Not enough rules")
+        raise PermissionError(
+            "Недостаточно прав доступа для выполнения команды")
 
 
 def read_file(active_path, object):
@@ -81,15 +80,14 @@ def read_file(active_path, object):
                     for line in file:
                         print(line.strip())
             else:
-                # Рэйзим ошибку
-                print("Недостаточно прав доступа для выполнения команды")
                 er_logger.error(
-                    "Недостаточно прав доступа для выоплнения этой команды")
+                    "Not enough rules")
+                raise PermissionError(
+                    "Недостаточно прав доступа для выполнения команды")
         else:
-            # Рэйзим ошибку
-            print("Невозможно прочитать этот тип объекта")
             er_logger.error(
                 "Can not read this object type")
+            raise ValueError("Невозможно прочитать этот тип объекта")
     else:
         if os.path.isfile(object) and pathlib.Path(object).suffix == ".txt":
             if os.access(object, os.R_OK):
@@ -98,15 +96,14 @@ def read_file(active_path, object):
                     for line in file:
                         print(line.strip())
             else:
-                # Рэйзим ошибку
-                print("Недостаточно прав доступа для выполнения команды")
                 er_logger.error(
-                    "Недостаточно прав доступа для выоплнения этой команды")
+                    "Not enough rules")
+                raise PermissionError(
+                    "Недостаточно прав доступа для выполнения команды")
         else:
-            # Рэйзим ошибку
-            print("Невозможно прочитать этот тип объекта")
             er_logger.error(
                 "Can not read this object type")
+            raise ValueError("Невозможно прочитать этот тип объекта")
 
 
 def copy(active_path, object, path):
@@ -117,11 +114,12 @@ def copy(active_path, object, path):
                 shutil.copy(object_path, path)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {path}")
                 er_logger.error(f"Не существует директория {path}")
+                raise FileNotFoundError(f"Не существует директория {path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" not in object and "\\" not in path:
         object_path = active_path / object
@@ -131,11 +129,12 @@ def copy(active_path, object, path):
                 shutil.copy(object_path, new_path)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {new_path}")
                 er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" not in path:
         new_path = active_path / path
@@ -144,24 +143,26 @@ def copy(active_path, object, path):
                 shutil.copy(object, new_path)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {new_path}")
                 er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" in path:
         if os.path.exists(object) and os.path.isfile(object) and os.access(object, os.X_OK):
             if os.path.exists(path) and os.path.isdir(path):
                 shutil.copy(object, path)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {path}")
                 er_logger.error(f"{path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
 
 
 def copy_tree(active_path, object, path):
@@ -173,11 +174,12 @@ def copy_tree(active_path, object, path):
                     path) / object, copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {path}")
-                er_logger.error(f"Не существует директория {path}")
+                er_logger.error(f"{path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" not in object and "\\" not in path:
         object_path = active_path / object
@@ -188,11 +190,12 @@ def copy_tree(active_path, object, path):
                                 copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {new_path}")
                 er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" not in path:
         new_path = active_path / path
@@ -202,12 +205,13 @@ def copy_tree(active_path, object, path):
                     new_path) / pathlib.Path(object).name, copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {new_path}")
                 er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" in path:
         if os.path.exists(object) and os.path.isdir(object) and os.access(object, os.X_OK):
             if os.path.exists(path) and os.path.isdir(path):
@@ -215,12 +219,13 @@ def copy_tree(active_path, object, path):
                     path) / pathlib.Path(object).name, copy_function=shutil.copy2)
                 print("Копирование завершено")
             else:
-                print(f"Не существует директория {path}")
                 er_logger.error(f"{path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
 
 
 def move(active_path, object, target):
@@ -232,12 +237,12 @@ def move(active_path, object, target):
                     target) / object)
                 print("Перемещение завершено")
             else:
-                print(f"Не существует директория {target}")
-                er_logger.error(f"Не существует директория {target}")
+                er_logger.error(f"{target} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {target}")
         else:
-            print(
-                f"Не существует объект {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует объект {object} или недостаточно прав доступа")
     elif "\\" not in object and "\\" not in target:
         new_path = active_path / target
@@ -246,12 +251,12 @@ def move(active_path, object, target):
                 shutil.move(object_path, new_path / object)
                 print("Перемещение завершено")
             else:
-                print(f"Не существует директория {new_path}")
-                er_logger.error(f"Не существует директория {new_path}")
+                er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(
-                f"Не существует объект {object} или недостаточно прав доступа")
             er_logger.error(
+                f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
                 f"Не существует объект {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" not in target:
         new_path = active_path / target
@@ -261,12 +266,13 @@ def move(active_path, object, target):
                     new_path) / pathlib.Path(object).name)
                 print("Перемещение завершено")
             else:
-                print(f"Не существует директория {new_path}")
                 er_logger.error(f"{new_path} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {new_path}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
     elif "\\" in object and "\\" in target:
         if os.path.exists(object) and os.access(object, os.X_OK):
             if os.path.exists(target) and os.path.isdir(target):
@@ -274,12 +280,13 @@ def move(active_path, object, target):
                     target) / pathlib.Path(object).name)
                 print("Перемещение завершено")
             else:
-                print(f"Не существует директория {target}")
                 er_logger.error(f"{target} is not a directory")
+                raise FileNotFoundError(f"Не существует директория {target}")
         else:
-            print(f"Не существует файл {object} или недостаточно прав доступа")
             er_logger.error(
                 f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует файл {object} или недостаточно прав доступа")
 
 
 def remove(active_path, object):
@@ -290,9 +297,12 @@ def remove(active_path, object):
                 os.remove(object)
                 print("Объект удален")
             else:
-                print(f"Не существует объект {object_path}")
+                er_logger.error(f"{object} does not exist")
+                raise FileNotFoundError(f"Не существует объект {object}")
         else:
-            print("Удаление отменено или недостаточно прав доступа")
+            er_logger.error("Deleting canceled or notenough rules")
+            raise PermissionError(
+                "Удаление отменено или недостаточно прав доступа")
     else:
         conf = input("Для подтверждения введите y/n: ")
         object_path = active_path / object
@@ -301,9 +311,13 @@ def remove(active_path, object):
                 os.remove(object_path)
                 print("Файл удален")
             else:
-                print(f"Не существует файл {object_path}")
+                er_logger.error(f"{object_path} does not exist")
+                raise FileNotFoundError(f"Не существует файл {object_path}")
+
         else:
-            print("Удаление отменено или недостаточно прав доступа")
+            er_logger.error("Deleting canceled or notenough rules")
+            raise PermissionError(
+                "Удаление отменено или недостаточно прав доступа")
 
 
 def remove_tree(active_path, object):
@@ -316,16 +330,18 @@ def remove_tree(active_path, object):
                         shutil.rmtree(object)
                         print("Файл удален")
                     else:
-                        # Рэйзим ошибку
-                        print(f"Не существует файл {object_path}")
+                        er_logger.error(f"{object} does not exist")
+                        raise FileNotFoundError(f"Не существует файл {object}")
                 else:
-                    # Рэйзим ошибку
-                    print("Нельзя удалить родительский каталог")
+                    er_logger.error("Can not delete home directory")
+                    raise ValueError("Нельзя удалить родительский каталог")
             else:
-                # Рэйзим ошибку
-                print("Нельзя удалить корневой каталог")
+                er_logger.error("Can not delete root")
+                raise ValueError("Нельзя удалить корневой каталог")
         else:
-            print("Удаление отменено или недостаточно прав доступа")
+            er_logger.error("Deleting canceled or notenough rules")
+            raise PermissionError(
+                "Удаление отменено или недостаточно прав доступа")
     else:
         conf = input("Для подтверждения введите y/n: ")
         object_path = active_path / object
@@ -336,35 +352,173 @@ def remove_tree(active_path, object):
                         shutil.rmtree(object_path)
                         print("Файл удален")
                     else:
-                        # Рэйзим ошибку
-                        print(f"Не существует файл {object_path}")
+                        er_logger.error(f"{object_path} does not exist")
+                        raise FileNotFoundError(
+                            f"Не существует файл {object_path}")
                 else:
-                    # Рэйзим ошибку
-                    print("Нельзя удалить родительский каталог")
+                    er_logger.error("Can not delete home directory")
+                    raise ValueError("Нельзя удалить родительский каталог")
             else:
-                # Рэйзим ошибку
-                print("Нельзя удалить корневой каталог")
+                er_logger.error("Can not delete root")
+                raise ValueError("Нельзя удалить корневой каталог")
         else:
-            print("Удаление отменено или недостаточно прав доступа")
+            er_logger.error("Deleting canceled or notenough rules")
+            raise PermissionError(
+                "Удаление отменено или недостаточно прав доступа")
 
 
 def zip_archive(active_path, object, ar_name):
     if "\\" in object:
         if os.path.exists(object) and os.access(object, os.X_OK) and os.path.isdir(object):
-            make_archive(ar_name, "zip", root_dir=str(object))
+            shutil.make_archive(str(pathlib.Path(object).parents[0] / ar_name),
+                                "zip", root_dir=str(pathlib.Path(object)))
             print("Архивирование завершено")
         else:
-            # Рэйзим ошибку
-            print(
-                f"Не существует директория {object} или нехватает прав доступа")
             er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует директория {object} или нехватает прав доступа")
     else:
         object_path = active_path / object
         if os.path.exists(object_path) and os.access(object_path, os.X_OK) and os.path.isdir(object_path):
-            make_archive(ar_name, "zip", root_dir=str(object_path))
+            shutil.make_archive(str(active_path / ar_name),
+                                "zip", root_dir=str(object_path))
             print("Архивирование завершено")
         else:
-            # Рэйзим ошибку
-            print(
-                f"Не существует директория {object} или нехватает прав доступа")
             er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует директория {object} или нехватает прав доступа")
+
+
+def zip_unarchive(active_path, object):
+    if "\\" in object:
+        if os.path.exists(object) and os.access(object, os.X_OK) and pathlib.Path(object).suffix == ".zip":
+            shutil.unpack_archive(
+                object, pathlib.Path(object).parents[0], "zip")
+            print("Извлечение завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует архив {object} или нехватает прав доступа")
+    else:
+        object_path = active_path / object
+        if os.path.exists(object_path) and os.access(object_path, os.X_OK) and pathlib.Path(object_path).suffix == ".zip":
+            shutil.unpack_archive(object_path, active_path, "zip")
+            print("Извлечение завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует архив {object} или нехватает прав доступа")
+
+
+def tar_archive(active_path, object, ar_name):
+    if "\\" in object:
+        if os.path.exists(object) and os.access(object, os.X_OK) and os.path.isdir(object):
+            shutil.make_archive(str(pathlib.Path(object).parents[0] / ar_name),
+                                "tar", root_dir=str(pathlib.Path(object)))
+            print("Архивирование завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует директория {object} или нехватает прав доступа")
+    else:
+        object_path = active_path / object
+        if os.path.exists(object_path) and os.access(object_path, os.X_OK) and os.path.isdir(object_path):
+            shutil.make_archive(str(active_path / ar_name),
+                                "tar", root_dir=str(object_path))
+            print("Архивирование завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует директория {object} или нехватает прав доступа")
+
+
+def tar_unarchive(active_path, object):
+    if "\\" in object:
+        if os.path.exists(object) and os.access(object, os.X_OK) and pathlib.Path(object).suffix == ".tar":
+            shutil.unpack_archive(
+                object, pathlib.Path(object).parents[0], "tar")
+            print("Извлечение завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует архив {object} или нехватает прав доступа")
+    else:
+        object_path = active_path / object
+        if os.path.exists(object_path) and os.access(object_path, os.X_OK) and pathlib.Path(object_path).suffix == ".tar":
+            shutil.unpack_archive(object_path, active_path, "tar")
+            print("Извлечение завершено")
+        else:
+            er_logger.error(f"{object} does not exist or not enough rules")
+            raise FileNotFoundError(
+                f"Не существует архив {object} или нехватает прав доступа")
+
+
+def grep(pattern, object, flag1=None, flag2=None):
+    if os.path.exists(object):
+        if os.access(object, os.X_OK):
+            object_path = pathlib.Path(object)
+            if flag1 == None and flag2 == None:
+                regex = re.compile(pattern)
+                if pathlib.Path(object_path).suffix == ".txt":
+                    with open(object_path, "r", encoding="utf-8", errors="replace") as f:
+                        for line_num, line in enumerate(f, 1):
+                            if regex.search(line):
+                                print(
+                                    f"Имя файла: {str(object_path)}\nНомер строки: {line_num}\nСтрока: {line.rstrip()}\n")
+                else:
+                    er_logger.error(
+                        f"{str(object_path)} is not a .txt")
+                    raise FileNotFoundError(
+                        f"{str(object_path)} расширение не .txt")
+            elif flag1 == None and flag2 == "-i":
+                regex = re.compile(pattern, re.IGNORECASE)
+                if pathlib.Path(object_path).suffix == ".txt":
+                    with open(object_path, "r", encoding="utf-8", errors="replace") as f:
+                        for line_num, line in enumerate(f, 1):
+                            if regex.search(line):
+                                print(
+                                    f"Имя файла: {str(object_path)}\nНомер строки: {line_num}\nСтрока: {line.rstrip()}\n")
+            elif flag1 == "-r" and flag2 == None:
+                if os.path.isdir(object_path):
+                    regex = re.compile(pattern)
+                    files = collect_files(object_path)
+                    for path in files:
+                        with open(path, "r", encoding="utf-8", errors="replace") as f:
+                            for line_num, line in enumerate(f, 1):
+                                if regex.search(line):
+                                    print(
+                                        f"Имя файла: {str(path)}\nНомер строки: {line_num}\nСтрока: {line.rstrip()}\n")
+                else:
+                    er_logger.error(f"{object_path} is not a directory")
+                    raise FileNotFoundError(
+                        f"{object_path} не является директорией")
+            elif flag1 == "-r" and flag2 == "-i":
+                if os.path.isdir(object_path):
+                    regex = re.compile(pattern, re.IGNORECASE)
+                    files = collect_files(object_path)
+                    for path in files:
+                        with open(path, "r", encoding="utf-8", errors="replace") as f:
+                            for line_num, line in enumerate(f, 1):
+                                if regex.search(line):
+                                    print(
+                                        f"Имя файла: {str(path)}\nНомер строки: {line_num}\nСтрока: {line.rstrip()}\n")
+                else:
+                    er_logger.error(f"{object_path} is not a directory")
+                    raise FileNotFoundError(
+                        f"{object_path} не является директорией")
+        else:
+            er_logger.error("Not enough rules")
+            raise PermissionError(
+                "Недостаточно прав доступа")
+    else:
+        er_logger.error(f"{object} does not exist")
+        raise FileNotFoundError(
+            f"{object} не существует")
+
+
+def collect_files(target):
+    files = []
+    target_path = pathlib.Path(target)
+    for obj in target_path.rglob("*.txt"):
+        files.append(obj)
+    return files
