@@ -9,7 +9,33 @@ from funcs import (if_ls, if_ls_l, chdir_down,
 from str_formatter import str_formatter
 
 
-def structure():
+def structure() -> None:
+    """Структура проекта, Содержит логику и отлов ошибок
+
+    Raises:
+        ValueError: Неправильный формат команды ls
+        FileNotFoundError: Текущая директория не существует или не является папкой
+        FileNotFoundError: Путь не существует или ведет не к папке
+        FileNotFoundError: Отсутствует родительская директория
+        FileNotFoundError: Отсутствует домашний каталог
+        FileNotFoundError: Объект не является директорией
+        FileNotFoundError: Отсутствует директория с указанным именем
+        ValueError: Неправильный формат команды cd
+        ValueError: Чтение файла с таким расширением не поддерживается
+        FileNotFoundError: Отсутствует файл с указанным именем
+        ValueError: Неправильный формат команды cat
+        ValueError: Неправильный формат команды cp
+        ValueError: Неправильный формат команды mv
+        ValueError: Неправильный формат команды rm
+        ValueError: Неправильный формат команды zip
+        ValueError: Неправильный формат команды unzip
+        ValueError: Неправильный формат команды tar
+        ValueError: Неправильный формат команды untar
+        ValueError: Неверный флаг для команды grep
+        ValueError: Неправильный формат команды grep
+        ValueError: Такой команды не существует
+        PermissionError: Недостаточно прав доступа для выполнения операции
+    """
     stop_word = "stop"
     active_path = pathlib.Path(r"C:\Users\TatyanaPC\Documents\Test_for_lab2")
     logger.debug(f"Start programm, default path: {str(active_path)}")
@@ -221,9 +247,9 @@ def structure():
                         grep(parts[1], parts[2], parts[3], parts[4])
                     else:
                         er_logger.error(
-                            "??")
+                            "Incorrect format of the command grep. Use: grep <pattern> <object_or_path> <-r(optional)> <-i(optional)>")
                         raise ValueError(
-                            "??")
+                            "Неверный формат команды grep. Используйте: grep <шаблон> <объект_или_путь> <-r(опционално)> <-i(опционально)>")
                 else:
                     er_logger.error("Incorrect command")
                     raise ValueError("Такой команды не существует")

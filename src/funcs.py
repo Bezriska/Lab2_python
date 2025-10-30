@@ -8,11 +8,27 @@ import re
 
 
 def if_ls(active_path) -> list:
+    """Показывает список объектов в директории
+
+    Args:
+        active_path (Path): Текущий путь
+
+    Returns:
+        list: Список объектов в директории
+    """
     output = "\n".join(os.listdir(active_path))
     return output
 
 
 def if_ls_l(active_path) -> list:
+    """Показывает список объектов с подробными данными в директории
+
+    Args:
+        active_path (Path): Текущий путь
+
+    Returns:
+        list: Список объектов с данными в директории
+    """
     output = []
     for object in os.listdir(active_path):
         path = active_path / object
@@ -29,7 +45,19 @@ def if_ls_l(active_path) -> list:
     return output
 
 
-def chdir_down(active_path, user_input):
+def chdir_down(active_path, user_input) -> pathlib.Path:
+    """Смена директории на ввод пользователя
+
+    Args:
+        active_path (Path): Текущий путь
+        user_input (list): Ввод пользователя, разбитый на токены.
+
+    Raises:
+        PermissionError: Недостаточно прав доступа для выполнения команды
+
+    Returns:
+        Path: Новый путь
+    """
     if "\\" not in user_input:
         if os.access(active_path, os.X_OK):
             output = pathlib.Path(active_path).joinpath(user_input)
@@ -49,7 +77,18 @@ def chdir_down(active_path, user_input):
     return output
 
 
-def chdir_up(active_path):
+def chdir_up(active_path) -> pathlib.Path:
+    """Переход в родительскую директорию от текущей
+
+    Args:
+        active_path (Path): Текущий путь
+
+    Raises:
+        PermissionError: Недостаточно прав доступа для выполнения команды
+
+    Returns:
+        Path: Новый путь
+    """
     if os.access(active_path, os.X_OK):
         output = pathlib.Path(active_path).parents[0]
         return output
@@ -60,7 +99,15 @@ def chdir_up(active_path):
             "Недостаточно прав доступа для выполнения команды")
 
 
-def home_dir():
+def home_dir() -> pathlib.Path:
+    """Переходит в домашнюю директорию
+
+    Raises:
+        PermissionError: Недостаточно прав доступа для выполнения команды
+
+    Returns:
+        Path: Новый путь
+    """
     if os.access(pathlib.Path.home(), os.X_OK):
         output = pathlib.Path.home()
         return output
@@ -71,7 +118,17 @@ def home_dir():
             "Недостаточно прав доступа для выполнения команды")
 
 
-def read_file(active_path, object):
+def read_file(active_path, object) -> None:
+    """Выводит содержимое текстового файла
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Файл, который будет прочитан
+
+    Raises:
+        PermissionError: Недостаточно прав доступа для выполнения команды
+        ValueError: "Невозможно прочитать этот тип объекта"
+    """
     if "\\" not in object:
         if os.path.isfile(active_path / object) and pathlib.Path(active_path / object).suffix == ".txt":
             if os.access(active_path, os.R_OK):
@@ -106,7 +163,18 @@ def read_file(active_path, object):
             raise ValueError("Невозможно прочитать этот тип объекта")
 
 
-def copy(active_path, object, path):
+def copy(active_path, object, path) -> None:
+    """Копирование файла в текущую\\новую директорию
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Копируемый файл
+        path (str): Путь к файлу (отн\\абс)
+
+    Raises:
+        FileNotFoundError: Не существует директория
+        FileNotFoundError: Не существует файл  или недостаточно прав доступа
+    """
     if "\\" not in object and "\\" in path:
         object_path = active_path / object
         if os.path.exists(object_path) and os.path.isfile(object_path) and os.access(object_path, os.X_OK):
@@ -165,7 +233,18 @@ def copy(active_path, object, path):
                 f"Не существует файл {object} или недостаточно прав доступа")
 
 
-def copy_tree(active_path, object, path):
+def copy_tree(active_path, object, path) -> None:
+    """Копирование каталога рекурсивно в текущую\\новую директорию
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Копируемый файл
+        path (str): Путь к файлу (отн\\абс)
+
+    Raises:
+        FileNotFoundError: Не существует директория
+        FileNotFoundError: Не существует файл  или недостаточно прав доступа
+    """
     if "\\" not in object and "\\" in path:
         object_path = active_path / object
         if os.path.exists(object_path) and os.path.isdir(object_path) and os.access(object_path, os.X_OK):
@@ -228,7 +307,18 @@ def copy_tree(active_path, object, path):
                 f"Не существует файл {object} или недостаточно прав доступа")
 
 
-def move(active_path, object, target):
+def move(active_path, object, target) -> None:
+    """Перемещение объекта в новую директорию
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Перемещаемый объект
+        target (str): Куда переместить объект (отн\\абс)
+
+    Raises:
+        FileNotFoundError: Не существует директория
+        FileNotFoundError: Не существует объект или недостаточно прав доступа
+    """
     object_path = active_path / object
     if "\\" not in object and "\\" in target:
         if os.path.exists(object_path) and os.access(object_path, os.X_OK):
@@ -289,7 +379,17 @@ def move(active_path, object, target):
                 f"Не существует файл {object} или недостаточно прав доступа")
 
 
-def remove(active_path, object):
+def remove(active_path, object) -> None:
+    """Удаление объекта
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Удаляемый объект
+
+    Raises:
+        FileNotFoundError: Не существует объект
+        PermissionError: Удаление отменено или недостаточно прав доступа
+    """
     if "\\" in object:
         conf = input("Для подтверждения введите y/n: ")
         if conf == "y" and os.access(object, os.X_OK):
@@ -320,7 +420,19 @@ def remove(active_path, object):
                 "Удаление отменено или недостаточно прав доступа")
 
 
-def remove_tree(active_path, object):
+def remove_tree(active_path, object) -> None:
+    """Рекурсивное удаление каталога
+
+    Args:
+        active_path (Path): _Текущий путь
+        object (str): Перемещаемый объект
+
+    Raises:
+        FileNotFoundError: Не существует файл
+        ValueError: Нельзя удалить родительский каталог
+        ValueError: Нельзя удалить корневой каталог
+        PermissionError: Удаление отменено или недостаточно прав доступа
+    """
     if "\\" in object:
         conf = input("Для подтверждения введите y/n: ")
         if conf == "y" and os.access(object, os.X_OK):
@@ -367,7 +479,17 @@ def remove_tree(active_path, object):
                 "Удаление отменено или недостаточно прав доступа")
 
 
-def zip_archive(active_path, object, ar_name):
+def zip_archive(active_path, object, ar_name) -> None:
+    """Архивирует каталог в формате zip
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Архивируемый объект
+        ar_name (str): Имя архива
+
+    Raises:
+        FileNotFoundError: Не существует директория или нехватает прав доступа
+    """
     if "\\" in object:
         if os.path.exists(object) and os.access(object, os.X_OK) and os.path.isdir(object):
             shutil.make_archive(str(pathlib.Path(object).parents[0] / ar_name),
@@ -389,7 +511,16 @@ def zip_archive(active_path, object, ar_name):
                 f"Не существует директория {object} или нехватает прав доступа")
 
 
-def zip_unarchive(active_path, object):
+def zip_unarchive(active_path, object) -> None:
+    """Разархивирует каталог из формата zip
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Разархивируемый объект
+
+    Raises:
+        FileNotFoundError: Не существует директория или нехватает прав доступа
+    """
     if "\\" in object:
         if os.path.exists(object) and os.access(object, os.X_OK) and pathlib.Path(object).suffix == ".zip":
             shutil.unpack_archive(
@@ -410,7 +541,17 @@ def zip_unarchive(active_path, object):
                 f"Не существует архив {object} или нехватает прав доступа")
 
 
-def tar_archive(active_path, object, ar_name):
+def tar_archive(active_path, object, ar_name) -> None:
+    """Архивирует каталог в формате tar
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Архивируемый объект
+        ar_name (str): Имя архива
+
+    Raises:
+        FileNotFoundError: Не существует директория или нехватает прав доступа
+    """
     if "\\" in object:
         if os.path.exists(object) and os.access(object, os.X_OK) and os.path.isdir(object):
             shutil.make_archive(str(pathlib.Path(object).parents[0] / ar_name),
@@ -432,7 +573,16 @@ def tar_archive(active_path, object, ar_name):
                 f"Не существует директория {object} или нехватает прав доступа")
 
 
-def tar_unarchive(active_path, object):
+def tar_unarchive(active_path, object) -> None:
+    """Разархивирует каталог из формата tar
+
+    Args:
+        active_path (Path): Текущий путь
+        object (str): Разархивируемый объект
+
+    Raises:
+        FileNotFoundError: Не существует директория или нехватает прав доступа
+    """
     if "\\" in object:
         if os.path.exists(object) and os.access(object, os.X_OK) and pathlib.Path(object).suffix == ".tar":
             shutil.unpack_archive(
@@ -453,7 +603,21 @@ def tar_unarchive(active_path, object):
                 f"Не существует архив {object} или нехватает прав доступа")
 
 
-def grep(pattern, object, flag1=None, flag2=None):
+def grep(pattern, object, flag1=None, flag2=None) -> None:
+    """Выполняет поиск\\рекурсивный поиск внутри текстовых файлов по шаблону пользователя
+
+    Args:
+        pattern (str): Шаблон поиска
+        object (str): объект, где производится поиск
+        flag1 (str, optional): флаг -r (рекурсивный поиск по подкаталогам). По умолчанию принимает None.
+        flag2 (str, optional): флаг -i (поиск без учеа регистра). По умолчанию принимает None.
+
+    Raises:
+        FileNotFoundError: расширение не .txt
+        FileNotFoundError: не является директорией
+        PermissionError: Недостаточно прав доступа
+        FileNotFoundError: объект не существует
+    """
     if os.path.exists(object):
         if os.access(object, os.X_OK):
             object_path = pathlib.Path(object)
@@ -478,6 +642,11 @@ def grep(pattern, object, flag1=None, flag2=None):
                             if regex.search(line):
                                 print(
                                     f"Имя файла: {str(object_path)}\nНомер строки: {line_num}\nСтрока: {line.rstrip()}\n")
+                else:
+                    er_logger.error(
+                        f"{str(object_path)} is not a .txt")
+                    raise FileNotFoundError(
+                        f"{str(object_path)} расширение не .txt")
             elif flag1 == "-r" and flag2 == None:
                 if os.path.isdir(object_path):
                     regex = re.compile(pattern)
@@ -516,7 +685,15 @@ def grep(pattern, object, flag1=None, flag2=None):
             f"{object} не существует")
 
 
-def collect_files(target):
+def collect_files(target) -> list:
+    """Рекурсивно собирает файлы типа .txt из каталога и подкаталогов в список
+
+    Args:
+        target (str): Каталог для сбора
+
+    Returns:
+        list: список файлов
+    """
     files = []
     target_path = pathlib.Path(target)
     for obj in target_path.rglob("*.txt"):
