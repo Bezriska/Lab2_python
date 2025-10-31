@@ -1,4 +1,4 @@
-from src.structure import structure
+from structure import structure
 
 
 def main() -> None:

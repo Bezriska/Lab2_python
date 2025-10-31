@@ -1,12 +1,14 @@
 import os
 import pathlib
 from logger import (logger, er_logger)
-from funcs import (if_ls, if_ls_l, chdir_down,
-                   chdir_up, home_dir, read_file,
-                   copy, copy_tree, move, remove,
-                   remove_tree, zip_archive, zip_unarchive,
-                   tar_archive, tar_unarchive, grep)
+from navigation import (if_ls, if_ls_l, chdir_down, chdir_up, home_dir)
+from file_operations import (
+    read_file, copy, copy_tree, move, remove, remove_tree)
+from archives import (zip_archive, zip_unarchive, tar_archive, tar_unarchive)
+from search import grep
+from cmd_history import (write_in_history, history)
 from str_formatter import str_formatter
+from undo import undo
 
 
 def structure() -> None:
@@ -39,6 +41,8 @@ def structure() -> None:
     stop_word = "stop"
     active_path = pathlib.Path(r"C:\Users\TatyanaPC\Documents\Test_for_lab2")
     logger.debug(f"Start programm, default path: {str(active_path)}")
+    with open(".history", "r", encoding='utf-8') as file:
+        old_hs = file.readline().split("|")
     while True:
         try:
             print("\n", active_path)
@@ -51,12 +55,16 @@ def structure() -> None:
                 if "ls" == parts[0]:
                     if user_input == "ls":
                         print(if_ls(active_path))
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         if "\\" not in parts[1]:
                             if os.path.exists(active_path) and os.path.isdir(active_path):
                                 if len(parts) == 2 and parts[1] == "-l":
                                     for sublist in if_ls_l(active_path):
                                         print(" ".join(map(str, sublist)))
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                 else:
                                     er_logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
                                                     "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
@@ -73,9 +81,13 @@ def structure() -> None:
                             if os.path.exists(parts[1]) and os.path.isdir(parts[1]):
                                 if len(parts) == 2 and "\\" in parts[1]:
                                     print(if_ls(parts[1]))
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                 elif len(parts) == 3 and "\\" in parts[1] and "-l" == parts[2]:
                                     for sublist in if_ls_l(pathlib.Path(parts[1])):
                                         print(" ".join(map(str, sublist)))
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                 else:
                                     er_logger.error("Incorrect format of the ls command. Use: ls for relative paths, and ls -l for detailed output\n"
                                                     "For absolute paths, use: ls <path>, and ls <path> -l for detailed output")
@@ -91,6 +103,8 @@ def structure() -> None:
                         if parts[1] == "..":
                             if os.path.exists(active_path.parents[0]):
                                 active_path = chdir_up(active_path)
+                                old_hs = write_in_history(
+                                    user_input, old_hs)
                             else:
                                 er_logger.error(
                                     "The parent directory is missing")
@@ -99,6 +113,8 @@ def structure() -> None:
                         elif parts[1] == "~":
                             if os.path.exists(home_dir()):
                                 active_path = home_dir()
+                                old_hs = write_in_history(
+                                    user_input, old_hs)
                             else:
                                 er_logger.error(
                                     "The home directory is missing")
@@ -106,11 +122,15 @@ def structure() -> None:
                                     "Отсутствует домашний каталог")
                         elif parts[1] == "-d":
                             active_path = active_path.anchor
+                            old_hs = write_in_history(
+                                user_input, old_hs)
                         else:
                             if "\\" not in parts[1]:
                                 if parts[1] in os.listdir(active_path):
                                     new_path = chdir_down(
                                         active_path, parts[1])
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                     if os.path.isdir(new_path):
                                         active_path = new_path
                                     else:
@@ -126,6 +146,8 @@ def structure() -> None:
                             else:
                                 if pathlib.Path(parts[1]).name in os.listdir(pathlib.Path(parts[1]).parents[0]) and os.path.isdir(parts[1]):
                                     active_path = pathlib.Path(parts[1])
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                 else:
                                     er_logger.error(
                                         f"Missing directory with name: {parts[1]}. To go to disk directory, enter: cd -d")
@@ -143,6 +165,8 @@ def structure() -> None:
                             if os.path.exists(pathlib.Path(active_path) / parts[1]):
                                 if pathlib.Path(active_path / parts[1]).is_file() and pathlib.Path(active_path / parts[1]).suffix == ".txt":
                                     read_file(active_path, parts[1])
+                                    old_hs = write_in_history(
+                                        user_input, old_hs)
                                 else:
                                     er_logger.error(
                                         "Reading a file with this extension is not supported.")
@@ -156,6 +180,8 @@ def structure() -> None:
                         else:
                             if os.path.exists(parts[1]):
                                 read_file(active_path, parts[1])
+                                old_hs = write_in_history(
+                                    user_input, old_hs)
                             else:
                                 er_logger.error(
                                     f"Missing file with name: {parts[1]}")
@@ -169,8 +195,12 @@ def structure() -> None:
                 elif "cp" == parts[0]:
                     if len(parts) == 3:
                         copy(active_path, parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     elif len(parts) == 4 and parts[3] == "-r":
                         copy_tree(active_path, parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error("Incorrect format of the command cp. Use: cp <file_name> <new_directory>\n"
                                         "To copy a directory, use: cp <directory_name> <new_directory> -r")
@@ -179,6 +209,8 @@ def structure() -> None:
                 elif "mv" == parts[0]:
                     if len(parts) == 3:
                         move(active_path, parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command mv. Use: mv <file_name> <new_directory>")
@@ -187,8 +219,12 @@ def structure() -> None:
                 elif "rm" == parts[0]:
                     if len(parts) == 2:
                         remove(active_path, parts[1])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     elif len(parts) == 3 and parts[2] == "-r":
                         remove_tree(active_path, parts[1])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         print("Неправильный формат команды rm. Используйте: rm <имя_файла>\n"
                               "Для удаления каталога используйте: rm <имя_каталога> -r")
@@ -200,6 +236,8 @@ def structure() -> None:
                 elif "zip" == parts[0]:
                     if len(parts) == 3:
                         zip_archive(active_path, parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command zip. Use: zip <directory_name> <archive_name>")
@@ -208,6 +246,8 @@ def structure() -> None:
                 elif "unzip" == parts[0]:
                     if len(parts) == 2:
                         zip_unarchive(active_path, parts[1])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command unzip. Use: unzip <archive_name>")
@@ -216,6 +256,8 @@ def structure() -> None:
                 elif "tar" == parts[0]:
                     if len(parts) == 3:
                         tar_archive(active_path, parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command zip. Use: zip <directory_name> <archive_name>")
@@ -224,6 +266,8 @@ def structure() -> None:
                 elif "untar" == parts[0]:
                     if len(parts) == 2:
                         tar_unarchive(active_path, parts[1])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command unzip. Use: unzip <archive_name>")
@@ -233,11 +277,17 @@ def structure() -> None:
                 elif "grep" == parts[0]:
                     if len(parts) == 3:
                         grep(parts[1], parts[2])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     elif len(parts) == 4:
                         if parts[3] == "-i":
                             grep(parts[1], parts[2], None, parts[3])
+                            old_hs = write_in_history(
+                                user_input, old_hs)
                         elif parts[3] == "-r":
                             grep(parts[1], parts[2], parts[3], None)
+                            old_hs = write_in_history(
+                                user_input, old_hs)
                         else:
                             er_logger.error(
                                 "Incorrect flag. Avalible flags: <-r>, <-i>")
@@ -245,11 +295,19 @@ def structure() -> None:
                                 "Неверный флаг. Доступные флаги: <-r>, <-i>")
                     elif len(parts) == 5:
                         grep(parts[1], parts[2], parts[3], parts[4])
+                        old_hs = write_in_history(
+                            user_input, old_hs)
                     else:
                         er_logger.error(
                             "Incorrect format of the command grep. Use: grep <pattern> <object_or_path> <-r(optional)> <-i(optional)>")
                         raise ValueError(
                             "Неверный формат команды grep. Используйте: grep <шаблон> <объект_или_путь> <-r(опционално)> <-i(опционально)>")
+                elif "history" == parts[0]:
+                    history()
+                    old_hs = write_in_history(
+                        user_input, old_hs)
+                elif "undo" == user_input:
+                    undo(active_path)
                 else:
                     er_logger.error("Incorrect command")
                     raise ValueError("Такой команды не существует")
