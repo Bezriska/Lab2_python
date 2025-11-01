@@ -31,11 +31,11 @@ def undo(active_path) -> None:
         parts = str_formatter(last_com)
         command = parts[0]
         if command == "mv" and len(parts) >= 3:
-            _undo_mv(parts, active_path, history)
+            undo_mv(parts, active_path, history)
         elif command == "cp" and len(parts) >= 3:
-            _undo_cp(parts, active_path, history)
+            undo_cp(parts, active_path, history)
         elif command == "rm" and len(parts) >= 2:
-            _undo_rm(parts, active_path, history)
+            undo_rm(parts, active_path, history)
         else:
             er_logger.error(
                 f"Command {command} is not supported for undo or has incorrect format")
@@ -51,7 +51,7 @@ def undo(active_path) -> None:
         raise ValueError(f"Ошибка при отмене команды: {str(e)}")
 
 
-def _update_history(history) -> None:
+def update_history(history) -> None:
     """Обновляет файл истории после удаления команды
 
     Args:
@@ -64,7 +64,7 @@ def _update_history(history) -> None:
             file.write("")
 
 
-def _undo_mv(parts, active_path, history) -> None:
+def undo_mv(parts, active_path, history) -> None:
     """Отменяет команду mv - возвращает объект в исходное место
 
     Args:
@@ -93,7 +93,7 @@ def _undo_mv(parts, active_path, history) -> None:
             print(
                 f"Команда mv отменена: {file_name} возвращен из {current_location.parent} в {return_to_dir}")
             del history[-1]
-            _update_history(history)
+            update_history(history)
         else:
             raise FileNotFoundError(
                 f"Целевая директория для возврата не существует: {return_to_dir}")
@@ -102,7 +102,7 @@ def _undo_mv(parts, active_path, history) -> None:
             f"Файл не найден в ожидаемом месте: {current_location}")
 
 
-def _undo_cp(parts, active_path, history) -> None:
+def undo_cp(parts, active_path, history) -> None:
     """Отменяет команду cp - удаляет скопированный файл/каталог
 
     Args:
@@ -133,7 +133,7 @@ def _undo_cp(parts, active_path, history) -> None:
                     f"Команда cp отменена: удален скопированный каталог {copied_location}")
 
             del history[-1]
-            _update_history(history)
+            update_history(history)
         except Exception as e:
             raise ValueError(
                 f"Ошибка при удалении скопированного объекта: {e}")
@@ -142,7 +142,7 @@ def _undo_cp(parts, active_path, history) -> None:
             f"Скопированный объект не найден: {copied_location}")
 
 
-def _undo_rm(parts, active_path, history) -> None:
+def undo_rm(parts, active_path, history) -> None:
     """Отменяет команду rm - восстанавливает из временного каталога .trash
 
     Args:
@@ -170,7 +170,7 @@ def _undo_rm(parts, active_path, history) -> None:
                 f"Команда rm отменена: {item_name} восстановлен из .trash в {restore_to.parent}")
 
             del history[-1]
-            _update_history(history)
+            update_history(history)
         except Exception as e:
             raise ValueError(f"Ошибка при восстановлении из .trash: {e}")
     else:

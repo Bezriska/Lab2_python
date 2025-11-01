@@ -1,4 +1,5 @@
 import pathlib
+from logger import er_logger
 
 
 def write_in_history(command, old_hs) -> list:
@@ -34,9 +35,7 @@ def history(amount_com=None) -> None:
         with open(history_path, "r", encoding="utf-8") as file:
             content = file.read().strip()
             if content:
-                # Разделяем команды по символу |
                 commands = content.split("|")
-
                 if amount_com == None:
                     for i, cmd in enumerate(commands):
                         print(f"{i + 1}: {cmd}")
@@ -47,6 +46,8 @@ def history(amount_com=None) -> None:
                     for i in range(start_index, len(commands)):
                         print(f"{i + 1}: {commands[i]}")
             else:
-                print("История команд пуста")
+                er_logger.error("Command history is empty")
+                raise ValueError("История команд пуста")
     else:
-        print("История команд отсутствует")
+        er_logger.error("Command history does not exist")
+        raise ValueError("История команд не существует")

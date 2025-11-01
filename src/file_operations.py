@@ -269,7 +269,6 @@ def remove(active_path, object) -> None:
             if os.path.exists(object) and os.path.isfile(object):
                 file_name = pathlib.Path(object).name
                 trash_destination = trash_dir / file_name
-
                 counter = 1
                 while trash_destination.exists():
                     name_parts = pathlib.Path(
@@ -277,7 +276,6 @@ def remove(active_path, object) -> None:
                     trash_destination = trash_dir / \
                         f"{name_parts[0]}_{counter}{name_parts[1]}"
                     counter += 1
-
                 shutil.move(object, str(trash_destination))
                 print(f"Объект перемещен в .trash: {file_name}")
             else:
@@ -293,7 +291,6 @@ def remove(active_path, object) -> None:
         if conf == "y" and os.access(object_path, os.X_OK):
             if os.path.exists(object_path) and os.path.isfile(object_path):
                 trash_destination = trash_dir / object
-
                 counter = 1
                 while trash_destination.exists():
                     name_parts = pathlib.Path(
@@ -301,7 +298,6 @@ def remove(active_path, object) -> None:
                     trash_destination = trash_dir / \
                         f"{name_parts[0]}_{counter}{name_parts[1]}"
                     counter += 1
-
                 shutil.move(str(object_path), str(trash_destination))
                 print(f"Файл перемещен в .trash: {object}")
             else:
@@ -329,7 +325,6 @@ def remove_tree(active_path, object) -> None:
     trash_dir = active_path / ".trash"
     if not trash_dir.exists():
         trash_dir.mkdir()
-
     if "\\" in object:
         conf = input("Для подтверждения введите y/n: ")
         if conf == "y" and os.access(object, os.X_OK):
@@ -338,13 +333,11 @@ def remove_tree(active_path, object) -> None:
                     if os.path.exists(object) and os.path.isdir(object):
                         dir_name = pathlib.Path(object).name
                         trash_destination = trash_dir / dir_name
-
                         counter = 1
                         while trash_destination.exists():
                             trash_destination = trash_dir / \
                                 f"{dir_name}_{counter}"
                             counter += 1
-
                         shutil.move(object, str(trash_destination))
                         print(f"Каталог перемещен в .trash: {dir_name}")
                     else:
@@ -368,13 +361,11 @@ def remove_tree(active_path, object) -> None:
                 if object not in str(active_path):
                     if os.path.exists(object_path) and os.path.isdir(object_path):
                         trash_destination = trash_dir / object
-
                         counter = 1
                         while trash_destination.exists():
                             trash_destination = trash_dir / \
                                 f"{object}_{counter}"
                             counter += 1
-
                         shutil.move(str(object_path), str(trash_destination))
                         print(f"Каталог перемещен в .trash: {object}")
                     else:

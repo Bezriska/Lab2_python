@@ -1,4 +1,12 @@
 def str_formatter(s):
+    """Разбивает строку на список из частей
+
+    Args:
+        s (str): Ввод пользователя
+
+    Returns:
+        list: Разбитая строка
+    """
     result = []
     current = ""
     in_quotes = False
